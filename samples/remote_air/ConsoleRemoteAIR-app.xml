@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+<application xmlns="http://ns.adobe.com/air/application/2.0">
+    <id>com.junkbyte.console.ConsoleRemoteAIR</id> 
+    <version>2.6</version> 
+    <filename>Console Remote</filename> 
+    <name>Console Remote</name> 
+    <description> 
+        <text xml:lang="en">flash-console Remote</text> 
+    </description> 
+    <copyright>Lu Aye Oo (c) 2010</copyright> 
+    <initialWindow> 
+        <title>Console Remote</title> 
+        <content>ConsoleRemoteAIR.swf</content> 
+        <systemChrome>none</systemChrome> 
+        <transparent>true</transparent> 
+        <visible>true</visible> 
+    	<minSize>150 100</minSize>
+    	<maximizable>true</maximizable>
+    	<minimizable>true</minimizable>
+    	<resizable>true</resizable>
+    </initialWindow>
+    <installFolder>Flash-Console/ConsoleRemote</installFolder> 
+    <programMenuFolder>Flash-Console</programMenuFolder> 
+    <icon> 
+        <image16x16>icon16.png</image16x16> 
+        <image32x32>icon32.png</image32x32> 
+        <image48x48>icon48.png</image48x48> 
+        <image128x128>icon128.png</image128x128>  
+    </icon> 
+    <customUpdateUI>false</customUpdateUI> 
+    <allowBrowserInvocation>false</allowBrowserInvocation>
+</application>

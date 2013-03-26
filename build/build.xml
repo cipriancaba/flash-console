@@ -1,0 +1,224 @@
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="Console" basedir="..">
+
+	<property name="src.dir" value="${basedir}/src" />
+	<property name="build.dir" value="${basedir}/build" />
+	<property name="asdoc.dir" value="${basedir}/asdoc" />
+	<property name="bin.dir" value="${basedir}/bin" />
+	<property name="doc.dir" value="${basedir}/doc" />
+	<property name="samples.dir" value="${basedir}/samples" />
+	<property name="wiki.dir" value="./../wiki" />
+	<property name="temp.dir" value="${basedir}/temp" />
+	<property name="src.ver.file" value="${src.dir}/com/junkbyte/console/Console.as" />
+	<property name="src.air.config.file" value="${samples.dir}/remote_air/ConsoleRemoteAIR-app.xml" />
+	
+	<property name="src.package.path" value="${src.dir}/com/junkbyte/console/" />
+	
+	<property file="${build.dir}/local.properties" />
+
+	<taskdef resource="flexTasks.tasks" classpath="${FLEX_HOME}/ant/lib/flexTasks.jar" />
+	<path id="svnant.classpath">
+		<fileset dir="${svnant.path}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
+
+	<target name="initAnt">
+		<typedef resource="org/tigris/subversion/svnant/svnantlib.xml" classpathref="svnant.classpath" />
+	</target>
+	
+	<target name="BuildAll" description="Build everything!" depends="incrementBuildNumber">
+		<antcall target="compileSrc" />
+		<antcall target="compileASDoc" />
+	</target>
+
+	<target name="compileSrc" depends="updateVersion">
+		<antcall target="swf">
+			<param name="file" value="${samples.dir}/flash/SampleBasic.as" />
+			<param name="output" value="${bin.dir}/SampleBasic.swf" />
+			<param name="config" value="flex" />
+		</antcall>
+		<antcall target="swf">
+			<param name="file" value="${samples.dir}/flash/SampleAdvanced.as" />
+			<param name="output" value="${bin.dir}/sampleAdvanced.swf" />
+			<param name="config" value="flex" />
+		</antcall>
+		<antcall target="swf">
+			<param name="file" value="${samples.dir}/flash/SampleStyle.as" />
+			<param name="output" value="${bin.dir}/sampleStyle.swf" />
+			<param name="config" value="flex" />
+		</antcall>
+		<antcall target="swf">
+			<param name="file" value="${samples.dir}/flash/ConsoleRemote.as" />
+			<param name="output" value="${bin.dir}/consoleRemote.swf" />
+			<param name="config" value="flex" />
+		</antcall>
+		<antcall target="packageAir" />
+		<antcall target="swc" />
+	</target>
+	
+	<target name="incrementBuildNumber">
+		<propertyfile file="${build.dir}/project.properties">
+			<entry key="build.number" type="int" operation="+" value="1" />
+			<entry key="build.date" type="date" value="now"/>
+		</propertyfile>
+	</target>
+	<target name="updateVersion">
+		<property file="${build.dir}/project.properties"/>
+		<echo>"Version ${build.version}${build.stage}. build ${build.number} @ ${build.date}"</echo>
+		<replaceregexp file="${src.ver.file}" match="(VERSION:Number\s*=\s*).+;" replace="\1${build.version};" />
+		<replaceregexp file="${src.ver.file}" match="(VERSION_STAGE:String\s*=\s*).+;" replace='\1"${build.stage}";' />
+		<replaceregexp file="${src.ver.file}" match="(BUILD:int\s*=\s*).+;" replace="\1${build.number};" />
+		<replaceregexp file="${src.ver.file}" match="(BUILD_DATE:String\s*=\s*).+;" replace='\1"${build.date}";' />
+		<replaceregexp file="${src.air.config.file}" match="(&lt;version&gt;)\d+\.\d+(&lt;/version&gt;)" replace='\1${build.version}\2' />
+	</target>
+
+	<!-- Parameters: file, output, config -->
+	<target name="swf">
+		<echo message="Compiling SWF: ${file} to ${output}" />
+		<mxmlc file="${file}" output="${output}" keep-generated-actionscript="false" 
+			static-link-runtime-shared-libraries="true" debug="false">
+			<load-config filename="${FLEX_HOME}/frameworks/${config}-config.xml" />
+			<source-path path-element="${FLEX_HOME}/frameworks" />
+			<compiler.source-path path-element="${src.dir}" />
+			<compiler.source-path path-element="${samples.dir}/flash"/>
+			<default-size width="640" height="480" />
+		</mxmlc>
+	</target>
+
+	<!-- Parameters: class, output -->
+	<target name="swc">
+		<echo message="Compiling SWC" />
+		<property file="${build.dir}/project.properties"/>
+		<compc output="${bin.dir}/Console.swc">
+			<load-config filename="${FLEX_HOME}/frameworks/flex-config.xml" />
+			<include-sources dir="${src.package.path}" includes="*" />
+			<compiler.source-path path-element="${src.dir}" />
+		</compc>
+	</target>
+
+	<target name="packageAir">
+		<antcall target="swf">
+			<param name="file" value="${samples.dir}/remote_air/ConsoleRemoteAIR.as" />
+			<param name="output" value="${samples.dir}/remote_air/ConsoleRemoteAIR.swf" />
+			<param name="config" value="air" />
+		</antcall>
+		<exec executable="${FLEX_HOME}/bin/adt.bat" failonerror="true">
+			<arg line="-package" />
+			<arg line="-storetype pkcs12" />
+			<arg line="-keystore build/ConsoleRemote.p12" />
+			<arg line="-storepass ${AIR_CERT_PASS}" />
+			<arg line="${bin.dir}/ConsoleRemote.air" />
+			<arg line="${samples.dir}/remote_air/ConsoleRemoteAIR-app.xml" />
+			<arg line="-C ${samples.dir}/remote_air ConsoleRemoteAIR.swf" />
+			<arg line="-C ${doc.dir}/icons icon16.png" />
+			<arg line="-C ${doc.dir}/icons icon32.png" />
+			<arg line="-C ${doc.dir}/icons icon48.png" />
+			<arg line="-C ${doc.dir}/icons icon128.png" />
+		</exec>
+	</target>
+
+	<target name="zip" description="Package to ZIP" depends="initAnt">
+		<property file="${build.dir}/project.properties"/>
+		<echo>"Packaging to Zip. Make sure you have commited new files to SVN as it will only package versioned files."</echo>
+		<delete dir="${temp.dir}" />
+		<svn>
+			<update dir="${basedir}" />
+			<export srcPath="${basedir}" destPath="${temp.dir}" />
+		</svn>
+		<delete dir="${temp.dir}/build" />
+		<zip destfile="console${build.version}${build.stage}.zip">
+			<fileset dir="${temp.dir}" />
+		</zip>
+		<delete dir="${temp.dir}" />
+	</target>
+
+	<target name="copyTxtToWiki">
+		<copy todir="${wiki.dir}" includeemptydirs="false">
+			<fileset dir="${doc.dir}" />
+			<mapper type="glob" from="*.txt" to="*.wiki" />
+		</copy>
+	</target>
+
+	<target name="copyWikiToTxt">
+		<copy todir="${doc.dir}" includeemptydirs="false">
+			<fileset dir="${wiki.dir}" />
+			<mapper type="glob" from="*.wiki" to="*.txt" />
+		</copy>
+	</target>
+
+	<!-- http://livedocs.adobe.com/flex/3/html/help.html?content=asdoc_9.html#142061 -->
+	<target name="compileASDoc" description="Generate ASDOC">
+		<delete dir="${asdoc.dir}" failOnError="false" includeEmptyDirs="true" />
+		<mkdir dir="${asdoc.dir}" />
+		<property file="${build.dir}/project.properties"/>
+		<exec executable="${FLEX_HOME}/bin/asdoc.exe" failonerror="true" osfamily="windows">
+			<arg line="-output '${asdoc.dir}'" />
+			<arg line="-source-path '${src.dir}'" />
+			<arg line="-doc-sources ${src.package.path}" />
+			<arg line="-main-title 'Flash-Console v${build.version}'" />
+			<arg line="-window-title 'Flash-Console v${build.version}'" />
+			<arg line="-footer 'Flash-Console v${build.version}'" />
+		</exec>
+		<exec executable="${FLEX_HOME}/bin/asdoc" failonerror="true" osfamily="mac">
+			<arg line="-output '${asdoc.dir}'" />
+			<arg line="-source-path '${src.dir}'" />
+			<arg line="-doc-sources ${src.package.path}" />
+			<arg line="-main-title 'Flash-Console v${build.version}'" />
+			<arg line="-window-title 'Flash-Console v${build.version}'" />
+			<arg line="-footer 'Flash-Console v${build.version}'" />
+		</exec>
+	</target>
+
+	
+	<!-- 
+	
+	EXTERNAL PUBLISHING
+	
+	-->
+	<!-- get the ivy settings file -->
+	<property name="ivy.settings.file" value="${build.dir}/ivysettings.xml" />
+	
+	<!-- check if the file exists in your ant lib -->
+    <target name="-check-use-file">
+        <available property="file.exists" file="${ANT_HOME}/lib/ivy-${ivy.download.version}.jar"/>
+    </target>
+
+	<!-- Get ivy jar for ant if not installed already -->
+	<target name="download_ivy" depends="-check-use-file" unless="file.exists">
+		<echo>[IVY download] Downloading ivy jar into your ant's lib folder (${ANT_HOME}) ${ANT_HOME}/lib/ivy-${ivy.download.version}.jar from ${ivy.download.url}</echo>
+		<mkdir dir="tmp" />
+		<get src="${ivy.download.url}" dest="tmp/${ivy.download.file}" usetimestamp="true"/>
+		<unzip src="tmp/${ivy.download.file}" dest="tmp">
+			<patternset>
+				<include name="apache-ivy-${ivy.download.version}/ivy-${ivy.download.version}.jar"/>
+			</patternset>
+			<mapper type="flatten"/>
+		</unzip>
+		<copy file="tmp/ivy-${ivy.download.version}.jar" todir="${ANT_HOME}/lib" />
+		<delete dir="tmp" />
+		<echo>[IVY download] Done</echo>
+	</target>
+	<!-- Publish to the repo -->
+	<target name="publish to as-artifacts" description="Publish to as-artifacts" depends="download_ivy,updateVersion,swc">
+	<!-- zip the source files -->
+		<zip destfile="${bin.dir}/Console-${build.version}${build.stage}.src.zip">
+			<fileset dir="${src.dir}" excludes=".svn"/>
+		</zip>
+
+	<!-- publish the swc and the src.zip -->
+		<ivy:configure />
+		<copy file="${build.dir}/ivy.tmpl" tofile="${build.dir}/ivy.xml" overwrite="true">
+		  <filterchain>
+			<replacetokens>
+			  <token key="version" value="${build.version}${build.stage}"/>
+			</replacetokens>
+		  </filterchain>
+		</copy>
+		<ivy:resolve file="${build.dir}/ivy.xml" />
+	<!-- if overwrite is true, if the library version already exists on the repo it will be overriden. -->
+		<ivy:publish resolver="as-artifacts" forcedeliver="true" overwrite="false">
+			<ivy:artifacts pattern="${bin.dir}/[artifact]-[revision].[ext]" />
+		</ivy:publish>
+		<delete file="${bin.loc}/${project.name.versioned}.src.zip" failonerror="false"/>
+	</target>
+</project>

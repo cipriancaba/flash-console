@@ -1,0 +1,271 @@
+#summary for v2.5
+#labels Featured,Phase-Implementation
+=Command Line: help and tutorial=
+
+==This document applies to v2.5 or above only==
+
+== Introduction ==
+  * Command line lets you execute ActionScript3 code during run-time (on the fly)...
+  * It uses the same syntax as actionscript
+  * As there is only one line at a time, CommandLine have to rely on 'scoping'. i.e, Your line of code is applied to your current scope.
+  * Most AS3 syntax is supported. Currently do NOT support: for (loops), if (statements), namespaces,...
+
+=== Example Uses ===
+  * We have developed a game that users are able to go to different parts of an island collecting items, keys and unlocking each part of the island. Testing and fixing different parts of the island for bugs would be a pain if you have to go through all stages from start every time you re-launch the game (or recompile to change the start place). With Console, we are able to just type which section we want to go to in command line like: `/goto red31` We can even give our selves items without picking them up by calling a command like: `/give bluekey1` with these simple commands we are able to let betatesters go to different parts of the island with different item combinations without needing to start the game all over again.
+  * We have a game that is purely based on physics. Sometimes we want to see what happened to object collisions slowly to see in detail. With commandline we can directly control stage frame rate by writing `stage.frameRate = 5`
+
+=== Limitations ===
+  * Console can only access/execute public/dynamic properties, methods and static classes/objects. You can not access private/protected properties/methods or perform operations such as for-loop, defining a brand new class, etc, - Command line is designed to debug and help develop, not to create another app within it :)
+
+
+== Getting started ==
+  * Command line is not allowed to use full features by default as a security caution
+  * Set Cc.config.commandLineAllowed = true; to allow use of full features
+  * To start commandliine: `Cc.commandline = true` OR press *CL* on console's top menu UI
+  * Command line appear as a text field at the bottom of the console window.
+  * It uses the same syntax as actionscript - Except that you can only do 1 simple line of code at a time.
+  * The class name of current scope is displayed on the left of command line. 
+  * Special commands start with `/` - to signify that it is commandLine specific.
+  * Stored variables in commandline can be accessed by prefixing with $ sign. For example $C will always return Console instance.
+
+== Tutorial==
+
+==== Basics ====
+  * For this tutorial, we will use the sample flash provided in download or found online at: http://www.junkbyte.com/flash-console/. 
+  * The document class file is located at samples/flash/SampleBasic.as
+
+  * Command line starts with its parent display as first scope (by default). You should see 'Stage' on the left of commandLine at the moment, meaning the stage is your current scope. If you write:
+{{{
+this
+}}} 
+  * and hit enter,it will reply:
+{{{
+[C] Returned flash.display::Stage: [object Stage]
+}}}
+  * Say you want to know more about the current scope, you can type:
+{{{
+/inspect
+}}} 
+  * This will return a big block of text
+  * If you scroll up you will find a lot of potentially useful information about stage
+  * One of them in this case is the list of children. You should be able to see:
+{{{
+[C] Children: root1@0{Sample}; Console@1{Console}
+}}} 
+  * You can now tell that there are two children on stage.
+  * Let's get to the document class 'Sample'. We can see its called 'root1' at child index 0.
+  * So to go to Sample class, you can do the following 2 ways:
+
+{{{
+getChildAt(0)
+}}} 
+OR
+{{{
+getChildByName('root1')
+}}} 
+  * You should see it returned "Returned {Sample}"
+  * Note that you can not write 'this.root1' in this case because Stage is not a dynamic class...
+  * To change your scope to this retrurned object, type:
+{{{
+/
+}}} 
+  * You should see that the scope name on the left of commandLine is now changed to 'Sample'.
+  * If you do /inspect again you should get slightly different results this time.
+{{{
+/inspect
+}}} 
+  * Lets demonstrate another command, /map - which maps the display list of your current scope.
+{{{
+/map
+}}} 
+  * You should get a tree like structure list mapping the display list
+  * You can click on any of the names in the log to change to the scope of that displayObject.
+  * Lets go to the head, *click on 'head {MovieClip}'* - near the bottom. _(you need to click on the word head to change scope, if you click on '{MovieClip}', it'll inspect that object)_ 
+  * it should say "Changed to {MovieClip}"
+
+  * The head have animation on the timeline, so you can play it.
+{{{
+play()
+}}}
+  * You should see the bunny eyes blink briefly...
+  * Just for the purpose of demonstration, if you want to go back to the previous scope, you can type:
+{{{
+//
+}}} 
+  * You got back to your previous scope - MovieClip. If you type:
+{{{
+name
+}}}
+  * You should see that it is the clip 'mcBunny'.
+  * For easy access to the bunny clip from console you can save it into command line's variables.
+{{{
+/save bunny
+}}}
+  * This way, where ever your scope is, you can refer to this clip by typing $bunny.
+  * like wise, your base command line scope (Stage in this example) is automatically saved as $base.
+  * Storing is not only limited to displays, you can store anything, including class references, functions, etc..
+  * In source code, you can use `Cc.store(<name>, <object>)` to store variables to Console.
+  * so typing the 2 line below will get you back to Stage as scope.
+{{{
+$base
+}}}
+{{{
+/
+}}}
+  * for demonstration purposes, what about move the mcBunny clip around... 
+  * remember your scope is stage at the moment so referring to bunny clip is required here.
+{{{
+$bunny.x = 100;
+$bunny.y = 100
+}}}
+  * You are now directly setting the properties of bunny clip.
+  * What about start mouse drag on the bunny?
+{{{
+$bunny.startDrag()
+}}}
+  * Move your mouse and the bunny should start moving too.
+  * Now just like you would in code, you'll have to call stopDrag to stop.
+{{{
+$bunny.stopDrag()
+}}}
+  * It is not just those functions and properties, you can call ANY public properties and method of $bunny.
+  * You can even do addEventListener... But ofc you'll need a function that accept events... 
+
+For example, you could generate event logs on MOUSE_MOVE events of the bunny.
+{{{
+$bunny.addEventListener('mouseMove', $C.log)
+}}}
+Now if you roll your mouse on the bunny movieClip, you will see lots of mouse event logs. _I am only using the string 'mouseMove' instead of MouseEvent.MOUSE_MOVE because I will be explaining about static classes later in this tutorial. $C is a stored reference to Console instance (not Cc)_
+To stop:
+{{{
+$bunny.removeEventListener('mouseMove', $C.log)
+}}}
+
+=== Static classes/singletons ===
+  * To access class singletons, you need to write the full path, as there is no room for 'import' syntax in a single line.
+  * For example, to jump to the scope of com.junkbyte.console.Cc - class (not instance), simply type:
+{{{
+com.junkbyte.console.Cc
+/
+}}}
+OR one line:
+{{{
+com.junkbyte.console.Cc; /
+}}} 
+  * Command line should resolve it as a class definition reference and return.
+  * If you do `/inspect`, you will see that all of the properties and methods have a prefix 'static' in them, because they are...
+
+As another static class example, you could hide the mouse by typing:
+{{{
+flash.ui.Mouse.hide()
+}}}
+You might need to move the mouse off the text field to notice its hidden... 
+To show again:
+{{{
+flash.ui.Mouse.show()
+}}}
+
+
+=== New instance ===
+  * If you have read the GettingStarted document, you will know com.junkbyte.console.Cc is mearly a controller for a com.junkbyte.console.Console instance.
+  * What about make your own Console instance from inside commandLine and manage it? - for ... fun?
+  * Note that you need to use the full class path (because there is no room for 'import' in a single line).
+{{{
+new com.junkbyte.console.Console()
+}}}
+  * No password param passed here to make sure its visible to start with :)
+  * Now change scope to return and save it as a variable using strong referencing... NOTE: you can't save it as C, because C is reserved value for your current Console.
+{{{
+/
+}}}
+{{{
+/savestrong myC
+}}}
+  * The reason to use `savestrong` here is because Console (by default) only store outside references as a weak reference to make sure it has minimal impact on the client's environment.
+  * Exceptional to this, CommandLine caches your last returned value and current scope as strong references to make sure it doesn't get garbage collected before you can do anything with it.
+
+  * Console is not visible yet because it needs a parent display, so why not put it on stage...
+{{{
+$base.addChild($myC)
+}}}
+  * You will probably see several lines saying Console is moved to top on both consoles. This is because 'alwaysOnTop' is enabled by default and both consoles will fight to be on top until their attempts run out.
+  * Move the new console down so that you can see both. Drag it down OR code it here as below:
+{{{
+$myC.y = 310
+}}}
+  * Now that's a nightmare you got not 1 but 2 bloody annoying consoles!
+  * Ok, so now this is your own console, managed through Cc's console command line... Why not try the normal console methods:
+{{{
+$myC.log('Testing one two three');
+$myC.fpsMonitor = true;
+$myC.commandLine = true;
+$myC.config.commandLineAllowed = true;
+}}}
+  * If you are not bored yet, you can even start commandLine from the new console and command the parent console using `Cc` - backwards!
+  * Write in the NEW console's command line:
+{{{
+com.junkbyte.console.Cc.fatal('STOP CONTROLLING YOUR MINION! :(')
+}}}
+  * You should see the message back at the main Console... (If you don't see it, maybe you need to go back to the global channel, press the ` * ` at the top)
+
+
+OK... I think that's enough for now. 
+In the tutorial I have demonstrated you how to:
+
+  * change scope
+  * inspect objects
+  * execute methods
+  * use display mapper command
+  * get / set properties of an object
+  * access static classes
+  * save as weak/strong references
+  * create new instances
+
+
+IMPORTANT: This example only show you how to manipulate properties of a display object. 
+It is not limited to displays, it can access and execute ANY object/class. 
+(You only see me changing displays here because its more visual) 
+
+
+== Notes ==
+  * You can do nested calls. such as, $base.getChildByName('root1').mcBunny.getChildByName($bunny.getChildAt(0).name); - etc, etc... 
+  * You can execute multiple lines of code in one go by separating with ; - you will need to add '/'s to change scope as well.
+  * To access *array indexes*, only use dot syntex, e.g. `myArray.1` instead of `myArray[1]` because `[...]` syntex is not supported.
+
+  * `/` = change scope to last returned value
+  * `//` = return to previous scope
+  * `/filter <text>` = filter/search logs for matching text. When done, click on the `*` (global channel) at the top to see all logs.
+  * `/base` = return to base scope (same as typing "$base;/")
+  * `/save <name>` = store last returned value to that name (weak reference). To call back: `$<name>`
+  * `/savestrong <name>` = store last returned value to that name using strong referencing (to make sure it doesn't get garbage collected). To call back: `$<name>`
+  * `/saved` = list all stored variables
+  * `/inspect` = get detailed info of your current scope
+  * `/map` =  get the display list map starting from your current scope
+  * `/string` = return the param of this command as a string. This is useful if you want to paste a block of text to use in commandline.
+
+  * `this` = returns current scope (as it would in normal AS);
+  * `$C` = Reference to Console `com.junkbyte.console.Console`
+  * `$base` = Reference to base (original) scope
+  * `$returned` = Previously returned value
+  * Press up/down arrow keys to recall previous commands.
+
+  * You can do maths on the fly
+   * Simple: `10-(5/2)`
+   * Assignment: `stage.frameRate *= 1.5`
+   * Advanced: `(90*Math.PI)/180` - 90 degree in radians
+   * Bitwise: `2761 & 234`
+
+
+== Security ==
+
+As command line can let user do almost any execution, it is a very big security risk for deployment. It is as if you are letting any user of your commandLine to code in your flash. 
+Examples of security risk:
+  * commandLine user can study your code interface - by using `/inspectfull` on your saved commandLine variables OR through stage display list - and potentially find security weak points or hack the workings of the application (examples: cheat scores in a game, pretend to be different user in an account based application)
+  * You can directly allow domains by calling `flash.system.Security.allowDomain('*')` - Although this can be a very convenient way to test security sandbox issues, it also defeat the point of flash security.
+  * You can load external swf files in with application domain set to current flash domain - which again defeat the point of flash security sandbox.
+
+How to increase security.
+  * It is likely very useful to have Console running during beta or even final deployment. However it is highly recommended that you either have a long password to Console OR disable commandLine (by default it is).
+{{{
+ConsoleConfig -> commandLineAllowed = false;
+}}}
