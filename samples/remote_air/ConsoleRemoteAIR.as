@@ -45,8 +45,10 @@ package {
 	import flash.filesystem.FileMode;
 	import flash.display.NativeWindowDisplayState;
 	import flash.display.NativeWindowResize;
+    import flash.utils.ByteArray;
+    import flash.utils.Endian;
 
-	public class ConsoleRemoteAIR extends MovieClip {
+    public class ConsoleRemoteAIR extends MovieClip {
 		private var _c : Console;
 		private var _serverSocket : ServerSocket;
 
@@ -83,9 +85,12 @@ package {
 				var parts:Array = params.split(/\s+/);
 				bindServer(parts[0], parts[1]);
 			});
+
 			_c.cl.localCommands.push("listen");
 			_c.report("Use <b>/listen <i>ip port</i></b> command to listen to socket connection.", -2);
 			_c.report("Example <b>/listen 127.0.0.1 200</b> command to listen to socket connection.", -1);
+
+            bindServer("127.0.0.1", 7777);
 		}
 
 		private function toggleOnTop() : void {
@@ -166,6 +171,7 @@ package {
 		private function onConnect(event : ServerSocketConnectEvent) : void {
 			var clientSocket : Socket = event.socket;
 			clientSocket.addEventListener(ProgressEvent.SOCKET_DATA, onClientSocketData);
+            clientSocket.endian = Endian.LITTLE_ENDIAN;
 			_c.report("Connection from " + clientSocket.remoteAddress + ":" + clientSocket.remotePort);
 		}
 

@@ -51,8 +51,8 @@ package com.junkbyte.console.core
 			super(console);
 			_channels = new Object();
 			remoter.addEventListener(Event.CONNECT, onRemoteConnection);
-			remoter.registerCallback("log", function(bytes:ByteArray):void{
-				registerLog(Log.FromBytes(bytes));
+			remoter.registerCallback("log", function(data:Object):void{
+				registerLog(Log.FromObject(data));
 			});
 		}
 		

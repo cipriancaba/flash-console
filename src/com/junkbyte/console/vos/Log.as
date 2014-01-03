@@ -61,13 +61,23 @@ package com.junkbyte.console.vos {
 			bytes.writeInt(priority);
 			bytes.writeBoolean(repeat);
 		}
-		public static function FromBytes(bytes:ByteArray):Log{
+
+        public static function FromBytes(bytes:ByteArray):Log{
 			var t:String = bytes.readUTFBytes(bytes.readUnsignedInt());
 			var c:String = bytes.readUTF();
 			var p:int = bytes.readInt();
 			var r:Boolean = bytes.readBoolean();
 			return new Log(t, c, p, r, true);
 		}
+
+        public static function FromObject(data:Object):Log{
+            var t:String = data['t'];
+            t = t.replace("$$$", "\n");
+            var c:String = data['c'];
+            var p:int = int (data['p']);
+            var r:Boolean = Boolean(int(data['r']));
+            return new Log(t, c, p, r, true);
+        }
 		
 		public function plainText():String{
 			return text.replace(/<.*?>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">");

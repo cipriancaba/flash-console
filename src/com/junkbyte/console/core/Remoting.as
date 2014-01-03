@@ -37,8 +37,9 @@ package com.junkbyte.console.core
 	import flash.system.Security;
 	import flash.utils.ByteArray;
 	import flash.utils.Dictionary;
+    import flash.utils.Endian;
 
-	[Event(name="CONNECT", type="flash.events.Event")]
+    [Event(name="CONNECT", type="flash.events.Event")]
 	/**
 	 * @private
 	 */
@@ -110,38 +111,88 @@ package com.junkbyte.console.core
 				}
 				_lastReciever = id;
 			}
-		
+
 			var buffer:ByteArray = _recBuffers[id];
-			try{
-				var pointer:uint = buffer.position = 0;
-				while(buffer.bytesAvailable){
-					var cmd:String = buffer.readUTF();
-					var arg:ByteArray = null;
-					if(buffer.bytesAvailable == 0) break;
-					if(buffer.readBoolean()){
-						if(buffer.bytesAvailable == 0) break;
-						var blen:uint = buffer.readUnsignedInt();
-						if(buffer.bytesAvailable < blen) break;
-						arg = new ByteArray();
-						buffer.readBytes(arg, 0, blen);
-					}
-					var callbackData:Object = _callbacks[cmd];
-					if(!callbackData.latest || id == _lastReciever){
-						if(arg) callbackData.fun(arg);
-						else callbackData.fun();
-					}
-					pointer = buffer.position;
-				}
-				if(pointer < buffer.length){
-					var recbuffer:ByteArray = new ByteArray();
-					recbuffer.writeBytes(buffer, pointer);
-					_recBuffers[id] = buffer = recbuffer;
-				}else{
-					delete _recBuffers[id];
-				}
-			}catch(err:Error){
-				report("Remoting sync error: "+err, 9);
-			}
+
+            buffer.position = 0;
+
+            try
+            {
+                if (buffer.bytesAvailable)
+                {
+                    var messages:Array = buffer.toString().split("\n");
+
+                    report("len: " + buffer.length + "/ " + messages.length + " \n" + buffer.toString());
+
+                    // There's always one more empty entry at the end of the buffer
+                    messages.pop();
+
+                    var callbackData:Object = _callbacks["log"];
+
+                    for each (var message:String in messages)
+                    {
+                        if (message != "" && !callbackData.latest || id == _lastReciever)
+                        {
+                            try
+                            {
+                                var output:Object = JSON.parse(message);
+
+                                callbackData.fun(output);
+                            }
+                            catch(error:Error)
+                            {
+                                report("JSON PARSE ERROR: " + message, 9);
+                            }
+    					}
+                    }
+
+//                    var data:Object = JSON.parse(buffer.toString());
+//
+//
+//					if(!callbackData.latest || id == _lastReciever){
+//						if(data) callbackData.fun(data);
+//						else callbackData.fun();
+//					}
+
+                    buffer.clear();
+                }
+            }
+            catch (error:Error)
+            {
+                report("Error: " + error.message);
+            }
+
+////            buffer.endian = Endian.LITTLE_ENDIAN;
+//			try{
+//				var pointer:uint = buffer.position = 0;
+//				while(buffer.bytesAvailable){
+//					var cmd:String = buffer.readUTF();
+//					var arg:ByteArray = null;
+//					if(buffer.bytesAvailable == 0) break;
+//					if(buffer.readBoolean()){
+//						if(buffer.bytesAvailable == 0) break;
+//						var blen:uint = buffer.readUnsignedInt();
+//						if(buffer.bytesAvailable < blen) break;
+//						arg = new ByteArray();
+//						buffer.readBytes(arg, 0, blen);
+//					}
+//					var callbackData:Object = _callbacks[cmd];
+//					if(!callbackData.latest || id == _lastReciever){
+//						if(arg) callbackData.fun(arg);
+//						else callbackData.fun();
+//					}
+//					pointer = buffer.position;
+//				}
+//				if(pointer < buffer.length){
+//					var recbuffer:ByteArray = new ByteArray();
+//					recbuffer.writeBytes(buffer, pointer);
+//					_recBuffers[id] = buffer = recbuffer;
+//				}else{
+//					delete _recBuffers[id];
+//				}
+//			}catch(err:Error){
+//				report("Remoting sync error: "+err, 9);
+//			}
 		}
 
 
