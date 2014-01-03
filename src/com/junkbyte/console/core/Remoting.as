@@ -122,7 +122,7 @@ package com.junkbyte.console.core
                 {
                     var messages:Array = buffer.toString().split("\n");
 
-                    report("len: " + buffer.length + "/ " + messages.length + " \n" + buffer.toString());
+//                    report("len: " + buffer.length + "/ " + messages.length + " \n" + buffer.toString());
 
                     // There's always one more empty entry at the end of the buffer
                     messages.pop();

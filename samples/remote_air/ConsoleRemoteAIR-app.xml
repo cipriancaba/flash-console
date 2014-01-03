@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8" ?> 
 <application xmlns="http://ns.adobe.com/air/application/2.0">
-    <id>com.junkbyte.console.ConsoleRemoteAIR</id> 
+    <id>com.2o.console.ConsoleRemoteAIR</id>
     <version>2.6</version> 
     <filename>Console Remote</filename> 
-    <name>Console Remote</name> 
+    <name>Artemis Console</name>
     <description> 
         <text xml:lang="en">flash-console Remote</text> 
     </description> 
     <copyright>Lu Aye Oo (c) 2010</copyright> 
     <initialWindow> 
-        <title>Console Remote</title> 
+        <title>Artemis Console</title>
         <content>ConsoleRemoteAIR.swf</content> 
         <systemChrome>none</systemChrome> 
         <transparent>true</transparent> 
@@ -19,8 +19,8 @@
     	<minimizable>true</minimizable>
     	<resizable>true</resizable>
     </initialWindow>
-    <installFolder>Flash-Console/ConsoleRemote</installFolder> 
-    <programMenuFolder>Flash-Console</programMenuFolder> 
+    <installFolder>ArtemisConsole/ConsoleRemote</installFolder>
+    <programMenuFolder>ArtemisConsole</programMenuFolder>
     <icon> 
         <image16x16>icon16.png</image16x16> 
         <image32x32>icon32.png</image32x32> 
